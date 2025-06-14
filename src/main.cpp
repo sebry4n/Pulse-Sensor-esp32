@@ -1,40 +1,75 @@
 #include <Arduino.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
 
-const int heartSensorPin = 14; // GPIO14
-const int numSamples = 50;     // Moving average over the last 10 samples
+const char* ssid = "POCO F4";
+const char* password = "ryan1234";
 
-int readings[numSamples];      // Circular buffer
-int readIndex = 0;
-int total = 0;
-int average = 0;
+const char* serverURL = "http://192.168.116.12:5000/numbers";
+
+int lastValue = 0;
 
 void setup() {
   Serial.begin(115200);
-  analogReadResolution(12);       // 12-bit resolution (0-4095)
-  analogSetAttenuation(ADC_11db); // Read up to ~3.3V
+  WiFi.begin(ssid, password);
+  Serial.print("Connecting to WiFi");
 
-  // Initialize readings array
-  for (int i = 0; i < numSamples; i++) {
-    readings[i] = 0;
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
   }
+  Serial.println("Connected!");
+
+  pinMode(LED_BUILTIN, OUTPUT); // Initialize the built-in LED pin
 }
 
 void loop() {
-  // Subtract the oldest reading
-  total -= readings[readIndex];
+  if ((WiFi.status() == WL_CONNECTED)) {
+    HTTPClient http;
+    http.begin(serverURL);
+    int httpCode = http.GET();
 
-  // Read the current sensor value
-  readings[readIndex] = analogRead(heartSensorPin);
+    if (httpCode == 200) {
+      String newValue = http.getString();
 
-  // Add the new reading to total
-  total += readings[readIndex];
+      JsonDocument doc;
+      DeserializationError error = deserializeJson(doc, newValue);
+      if (error) {
+        Serial.print("deserializeJson() failed: ");
+        Serial.println(error.c_str());
+        return;
+      }
 
-  // Advance the index (loop around if needed)
-  readIndex = (readIndex + 1) % numSamples;
 
-  // Compute the average
-  average = total / numSamples;
+      // Extract the value from the JSON object
+      int value = doc[0]["num"].as<int>();
+      Serial.print("Received value: ");
+      Serial.println(value);
 
-  Serial.println(average); // Smoothed signal
-  delay(10);               // ~100 Hz sample rate
+      if(lastValue == value)
+      {
+        ;
+      }
+      else if(value)
+      {
+        digitalWrite(LED_BUILTIN, LOW); // Turn on the LED
+        Serial.println("LED ON");
+        lastValue = value;
+      } else {
+        digitalWrite(LED_BUILTIN, HIGH); // Turn off the LED
+        Serial.println("LED OFF");
+        lastValue = value;
+      }
+
+    } else {
+      Serial.print("Error code: ");
+      Serial.println(httpCode);
+    }
+
+
+    http.end();
+  }
+
+  delay(5000); // Poll every 5 seconds
 }
