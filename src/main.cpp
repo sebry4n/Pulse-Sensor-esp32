@@ -36,6 +36,8 @@ void loop() {
     // Prepare JSON data
     StaticJsonDocument<200> doc;
     int valueToSend = analogRead(HEART_SENSOR_PIN);
+    Serial.print(">raw:");
+    Serial.println(valueToSend);
     doc["reading"] = valueToSend;
 
     String requestBody;
@@ -50,9 +52,9 @@ void loop() {
       Serial.println("Sent value: " + String(valueToSend));
       
       // Optional: LED ON when successful
-      digitalWrite(LED_BUILTIN, LOW);
-      delay(500);
-      digitalWrite(LED_BUILTIN, HIGH);
+      // digitalWrite(LED_BUILTIN, LOW);
+      // delay(500);
+      // digitalWrite(LED_BUILTIN, HIGH);
 
     } else {
       Serial.print("Error on sending POST: ");
@@ -64,5 +66,5 @@ void loop() {
     Serial.println("WiFi not connected.");
   }
 
-  delay(5000); // Wait 5 seconds before sending again
+  delay(100);
 }

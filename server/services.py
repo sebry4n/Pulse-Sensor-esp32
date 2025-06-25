@@ -14,7 +14,7 @@ from bson.objectid import ObjectId
 import datetime
 
 class services:
-    def __init__(self, db, cluster_name, mongo_uri = 'mongodb://localhost:27017/', filter_sample_size = 10, cache_size = 100):
+    def __init__(self, db, cluster_name, mongo_uri = 'mongodb://localhost:27017/', filter_sample_size = 4, cache_size = 100):
         # database
         self.db = db
         self.collection = db[cluster_name]

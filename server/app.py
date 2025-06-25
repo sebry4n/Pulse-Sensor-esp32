@@ -8,6 +8,7 @@ data schema:
 }
 """
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from pymongo import MongoClient
 from bson.json_util import dumps, loads
 from bson.objectid import ObjectId
@@ -20,6 +21,7 @@ DEBUG = True
 MONGO_URI = 'mongodb://localhost:27017/'
 
 app = Flask(__name__)
+CORS(app)
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[CLUSTER_NAME]
