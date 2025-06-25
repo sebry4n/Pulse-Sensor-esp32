@@ -3,73 +3,66 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-const char* ssid = "POCO F4";
-const char* password = "ryan1234";
+// Server configuration
+const char* ssid = "bababoiy";
+const char* password = "sembarang";
+const char* serverURL = "http://192.168.58.12:5000/data/publish_raw"; // Your server's endpoint
 
-const char* serverURL = "http://192.168.116.12:5000/numbers";
-
-int lastValue = 0;
+// pins
+#define HEART_SENSOR_PIN 10
 
 void setup() {
   Serial.begin(115200);
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi");
-
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    Serial.print(".");
+    Serial.print("attempting to connect...");
   }
-  Serial.println("Connected!");
+  Serial.println("\nConnected to WiFi!");
 
-  pinMode(LED_BUILTIN, OUTPUT); // Initialize the built-in LED pin
+  pinMode(LED_BUILTIN, OUTPUT);
+  analogReadResolution(12);
+  analogSetAttenuation(ADC_11db);
+  digitalWrite(LED_BUILTIN, HIGH);
 }
 
 void loop() {
-  if ((WiFi.status() == WL_CONNECTED)) {
+  if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin(serverURL);
-    int httpCode = http.GET();
+    http.addHeader("Content-Type", "application/json");
 
-    if (httpCode == 200) {
-      String newValue = http.getString();
+    // Prepare JSON data
+    StaticJsonDocument<200> doc;
+    int valueToSend = analogRead(HEART_SENSOR_PIN);
+    doc["reading"] = valueToSend;
 
-      JsonDocument doc;
-      DeserializationError error = deserializeJson(doc, newValue);
-      if (error) {
-        Serial.print("deserializeJson() failed: ");
-        Serial.println(error.c_str());
-        return;
-      }
+    String requestBody;
+    serializeJson(doc, requestBody);
 
+    // Send POST request
+    int httpResponseCode = http.POST(requestBody);
 
-      // Extract the value from the JSON object
-      int value = doc[0]["num"].as<int>();
-      Serial.print("Received value: ");
-      Serial.println(value);
-
-      if(lastValue == value)
-      {
-        ;
-      }
-      else if(value)
-      {
-        digitalWrite(LED_BUILTIN, LOW); // Turn on the LED
-        Serial.println("LED ON");
-        lastValue = value;
-      } else {
-        digitalWrite(LED_BUILTIN, HIGH); // Turn off the LED
-        Serial.println("LED OFF");
-        lastValue = value;
-      }
+    if (httpResponseCode > 0) {
+      Serial.print("POST Response code: ");
+      Serial.println(httpResponseCode);
+      Serial.println("Sent value: " + String(valueToSend));
+      
+      // Optional: LED ON when successful
+      digitalWrite(LED_BUILTIN, LOW);
+      delay(500);
+      digitalWrite(LED_BUILTIN, HIGH);
 
     } else {
-      Serial.print("Error code: ");
-      Serial.println(httpCode);
+      Serial.print("Error on sending POST: ");
+      Serial.println(httpResponseCode);
     }
 
-
     http.end();
+  } else {
+    Serial.println("WiFi not connected.");
   }
 
-  delay(5000); // Poll every 5 seconds
+  delay(5000); // Wait 5 seconds before sending again
 }

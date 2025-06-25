@@ -1,57 +1,64 @@
+"""
+data schema:
+{
+    "data_raw" : int,    # raw data
+    "data_filtered: int, # low pass filter
+    "bpm" : int,         # beats per minute
+    "created_at" :       # timestamp
+}
+"""
 from flask import Flask, request, jsonify
 from pymongo import MongoClient
 from bson.json_util import dumps, loads
 from bson.objectid import ObjectId
+from services import services
+
+DB_NAME = 'jarkom_pulse'
+CLUSTER_NAME = 'data'
+PORT = 5000
+DEBUG = True
+MONGO_URI = 'mongodb://localhost:27017/'
 
 app = Flask(__name__)
-client = MongoClient('mongodb://localhost:27017/')
-db = client['admin']  # Replace 'testdb' with your MongoDB database name
-collection = db['numbers']  # Replace 'numbers' with your collection name
+client = MongoClient(MONGO_URI)
+db = client[DB_NAME]
+collection = db[CLUSTER_NAME]
+service = services(db, CLUSTER_NAME, MONGO_URI)
 
 # CRUD operations
 
 # Create
-@app.route('/numbers', methods=['POST'])
-def create_number():
+@app.route('/data/publish_raw', methods=['POST'])
+def create_data():
     data = request.get_json()
-    num = data['num']
-    new_number = {"num": num}
-    result = collection.insert_one(new_number)
-    return jsonify({"message": "Number added successfully", "id": str(result.inserted_id)}), 201
+    data_raw = data['reading']
+    result = service.create(data_raw)
+    
+    # for debugging purposes
+    print(f"Received data: {data_raw}")
+    print(f"Processed data: {result}")
+    
+    return jsonify({"message": "Data added successfully", "id": str(result.inserted_id)}), 201
 
 # Read
-@app.route('/numbers', methods=['GET'])
-def get_all_numbers():
-    numbers = collection.find()
-    return dumps(numbers), 200
+@app.route('/data', methods=['GET'])
+def get_data():
+    limit = request.args.get('limit', default=-1, type=int)
+    return service.read(limit), 200
 
-@app.route('/numbers/<id>', methods=['GET'])
-def get_number(id):
-    number = collection.find_one({"_id": ObjectId(id)})
-    if number:
-        return dumps(number), 200
+@app.route('/data/<id>', methods=['GET'])
+def get_data_by_id(id):
+    data = collection.find_one({"_id": ObjectId(id)})
+    if data:
+        return dumps(data), 200
     else:
-        return jsonify({"error": "Number not found"}), 404
-
-# Update
-@app.route('/numbers/<id>', methods=['PUT'])
-def update_number(id):
-    data = request.get_json()
-    updated_num = data['num']
-    result = collection.update_one({"_id": ObjectId(id)}, {"$set": {"num": updated_num}})
-    if result.modified_count > 0:
-        return jsonify({"message": "Number updated successfully"}), 200
-    else:
-        return jsonify({"error": "Number not found"}), 404
+        return jsonify({"error": "Data not found"}), 404
 
 # Delete
-@app.route('/numbers/<id>', methods=['DELETE'])
-def delete_number(id):
-    result = collection.delete_one({"_id": ObjectId(id)})
-    if result.deleted_count > 0:
-        return jsonify({"message": "Number deleted successfully"}), 200
-    else:
-        return jsonify({"error": "Number not found"}), 404
+@app.route('/data/clear', methods=['DELETE'])
+def delete_many():
+    result = service.clear()
+    return jsonify({"message": f"{result.deleted_count} records deleted"}), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=PORT, debug=DEBUG)

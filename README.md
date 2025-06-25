@@ -4,8 +4,9 @@ Database cluster name is `admin`, you can ran in in the cloud using mongoDB atla
 pip install flask
 pip install pymongo
 ```
+
 and then you can ran the server using the following command:
 
-```python
-python3 server/app.y
+```bash
+python3 server/app.py
 ```
