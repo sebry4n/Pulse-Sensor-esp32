@@ -124,8 +124,8 @@ export default function Home() {
       },
       y: {
         beginAtZero: true,
-        min: 20,
-        max: 60,
+        min: 0,
+        max: 160,
       },
     },
     elements: {
@@ -138,7 +138,7 @@ export default function Home() {
   const latestBPM = data.length > 0 ? data[data.length - 1].bpm : 0;
 
   return (
-    <main className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
+    <main className="min-h-screen bg-gray-100 flex flex-row items-center justify-center p-4">
       <Card className="w-full max-w-4xl shadow-md">
         <CardContent className="space-y-4 p-6">
           <h1 className="text-2xl font-bold">Pulse Sensor Dashboard</h1>
@@ -146,7 +146,7 @@ export default function Home() {
             <p className="text-lg font-semibold">Latest BPM: {latestBPM}</p>
             <div className="flex gap-2">
               <Button onClick={loadData} disabled={loading}>
-                {loading ? 'Loading...' : 'Reload'}
+                {loading ? "Loading..." : "Reload"}
               </Button>
               <Button variant="destructive" onClick={handleClear}>
                 Clear Data
@@ -155,6 +155,26 @@ export default function Home() {
           </div>
           <div className="h-96 w-full">
             <Line data={chartData} options={chartOptions} />
+          </div>
+          <div className="">
+            <p className="font-semibold mb-2">
+              Panduan Umum Detak Jantung per Menit (BPM)
+            </p>
+            <ul className="list-disc list-inside">
+              <li>Bayi baru lahir (0–3 bulan): 100–150 BPM</li>
+              <li>Bayi (3–6 bulan): 90–120 BPM</li>
+              <li>Balita (6–12 bulan): 80–120 BPM</li>
+              <li>Anak-anak (1–10 tahun): 70–110 BPM</li>
+              <li>
+                Anak-anak di atas 10 tahun dan Dewasa (termasuk lansia): 60–100
+              </li>
+              <li>
+                Atlet terlatih: 40–60 BPM
+              </li>
+              <li>
+                Bertemu Furina: tak hingga
+              </li>
+            </ul>
           </div>
         </CardContent>
       </Card>
