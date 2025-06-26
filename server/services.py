@@ -27,6 +27,19 @@ class services:
         self.cache_max_size = cache_size
         self.tail_index = 0
         
+        # generate fake cache for testing purposes
+        for i in range(cache_size):
+            self.create(self.__fake(i))
+        
+    def __fake(self, i):
+        """
+        Generate fake data for testing purposes.
+        """
+        if i%10 == 0:
+            return 50 + np.random.randint(-5, 5)
+        else:
+            return 20 + np.random.randint(-5, 5)
+    
     # utility functions
     def filtered(self, data_raw):
         """

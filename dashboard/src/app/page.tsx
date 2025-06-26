@@ -15,10 +15,12 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
+const BASE_URI = 'http://127.0.0.1';
+
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Legend, Tooltip);
 
 const fetchData = async () => {
-  const res = await fetch('http://192.168.58.12:5000/data?limit=100');
+  const res = await fetch(BASE_URI+`:5000/data?limit=100`);
   if (!res.ok) throw new Error('Failed to fetch data');
   const data = await res.json();
   console.log('Fetched data:', data); // Log the fetched data for debugging
@@ -26,7 +28,7 @@ const fetchData = async () => {
 };
 
 const clearData = async () => {
-  const res = await fetch('http://192.168.58.12:5000/data/clear', { method: 'DELETE' });
+  const res = await fetch(BASE_URI+`:5000/data/clear`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to clear data');
 };
 
@@ -138,7 +140,7 @@ export default function Home() {
   const latestBPM = data.length > 0 ? data[data.length - 1].bpm : 0;
 
   return (
-    <main className="min-h-screen bg-gray-100 flex flex-row items-center justify-center p-4">
+    <main className="min-h-screen relative flex flex-row items-center justify-center p-4">
       <Card className="w-full max-w-4xl shadow-md">
         <CardContent className="space-y-4 p-6">
           <h1 className="text-2xl font-bold">Pulse Sensor Dashboard</h1>
@@ -146,7 +148,7 @@ export default function Home() {
             <p className="text-lg font-semibold">Latest BPM: {latestBPM}</p>
             <div className="flex gap-2">
               <Button onClick={loadData} disabled={loading}>
-                {loading ? "Loading..." : "Reload"}
+                {loading ? "Loading..." : "Refresh"}
               </Button>
               <Button variant="destructive" onClick={handleClear}>
                 Clear Data
@@ -178,6 +180,14 @@ export default function Home() {
           </div>
         </CardContent>
       </Card>
+      <div className="h-full absolute inset-0 overflow-hidden -z-10">
+        <img
+          src="/background.png"
+          alt="home background"
+          className="absolute -z-20 inset-0 object-cover w-screen h-full"
+        />
+        <div className="absolute inset-0 bg-black opacity-30" /> {/* Dark overlay */}
+      </div>
     </main>
   );
 }
